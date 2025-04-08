@@ -2,67 +2,68 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For asset loading
+import 'package:flutter/services.dart';
 import 'fall_controller.dart';
 import 'fall_object.dart';
 import 'fall_painter.dart';
 
-/// The FlutterFall widget creates a falling particle animation where particles fall across the screen.
+/// FlutterFall is a widget that simulates falling particles (either images or emojis) on the screen.
+///
+/// The particles can be customized in terms of size, speed, rotation speed, wind speed,
+/// and the number of particles. It also supports both image and emoji particles.
 class FlutterFall extends StatefulWidget {
   /// The total number of falling particles.
-  /// This determines how many particles will be rendered on the screen.
   final int totalParticles;
 
-  /// The speed of falling particles.
-  /// A higher value will make the particles fall faster.
+  /// The speed at which the particles fall.
   final double particleSpeed;
 
-  /// Controls whether the falling effect is active.
-  /// When set to true, the particles will be animated.
+  /// Flag to determine whether the fall animation is running.
   final bool isRunning;
 
-  /// If true, the particles will start falling from the top of the screen.
-  /// Defaults to false, allowing particles to enter from the whole screen.
+  /// Flag to determine whether particles should start from the top.
   final bool startFromTop;
 
-  /// List of image URLs or asset paths to be used as falling particles.
-  /// This is a required parameter to define the visuals of the falling particles.
+  /// A list of particle image paths used when `useEmojis` is false.
   final List<String> particleImages;
 
-  /// The size of each falling particle.
-  /// Defaults to 30, but can be adjusted to make particles larger or smaller.
+  /// A list of emojis used when `useEmojis` is true.
+  final List<String>? emojiList;
+
+  /// The size of the particles.
   final double? particleSize;
 
-  /// Speed of rotation for the falling particles.
-  /// Defaults to 0.05, which controls how quickly particles spin as they fall.
+  /// The speed at which the particles rotate.
   final double particleRotationSpeed;
 
-  /// Speed of the wind effect applied to the falling particles.
-  /// Defaults to 1.0, allowing for a gentle sway effect.
+  /// The speed at which the particles are affected by wind.
   final double particleWindSpeed;
 
-  /// Controller for managing dynamic updates.
-  /// Allows external control over the falling particle's properties.
+  /// A controller to update the properties of the falling particles dynamically.
   final FallController? fallController;
+
+  /// Flag to switch between emoji and image particles. Defaults to false (images).
+  final bool? useEmojis;
 
   const FlutterFall({
     super.key,
-    this.totalParticles = 40, // Default number of falling particles
-    this.particleSpeed = 0.05, // Default speed of falling particles
-    this.isRunning = true, // Default is to run the animation
-    required this.particleImages, // Required list of particle images
-    this.startFromTop = false, // Default is to start from the whole screen
-    this.particleSize = 30, // Default size of particles
-    this.particleRotationSpeed = 0.02, // Default rotation speed
-    this.particleWindSpeed = 1.0, // Default wind speed
-    this.fallController, // Optional controller for external management
+    this.totalParticles = 40,
+    this.particleSpeed = 0.05,
+    this.isRunning = true,
+    required this.particleImages,
+    this.emojiList,
+    this.startFromTop = false,
+    this.particleSize = 30,
+    this.particleRotationSpeed = 0.02,
+    this.particleWindSpeed = 1.0,
+    this.fallController,
+    this.useEmojis = false, // Default is false, meaning images are used
   });
 
   @override
   FallWidgetState createState() => FallWidgetState();
 }
 
-/// The state class for the FlutterFall widget.
 class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
   late final AnimationController controller;
   late int _totalObjects;
@@ -70,24 +71,18 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
   late double _particleSize;
   late double _rotationSpeed;
   late double _windSpeed;
-
-  final List<FallObject> _fallingObjects = []; // List to hold falling particles
+  final List<FallObject> _fallingObjects = [];
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize values based on the fallController or fallback to widget defaults
-    _totalObjects =
-        widget.fallController?.totalParticles ?? widget.totalParticles;
+    _totalObjects = widget.fallController?.totalParticles ?? widget.totalParticles;
     _speed = widget.fallController?.particleFallSpeed ?? widget.particleSpeed;
     _particleSize = widget.fallController?.particleSize ?? widget.particleSize!;
-    _rotationSpeed = widget.fallController?.particleRotationSpeed ??
-        widget.particleRotationSpeed;
-    _windSpeed =
-        widget.fallController?.particleWindSpeed ?? widget.particleWindSpeed;
+    _rotationSpeed = widget.fallController?.particleRotationSpeed ?? widget.particleRotationSpeed;
+    _windSpeed = widget.fallController?.particleWindSpeed ?? widget.particleWindSpeed;
 
-    // Listen for updates to fallController and apply changes dynamically
     widget.fallController?.onUpdate = ({
       int? totalObjects,
       double? speed,
@@ -104,7 +99,6 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
       });
     };
 
-    // Initialize the animation controller for continuous updates (repeats every 30ms)
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 30),
@@ -112,13 +106,12 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
       ..addListener(() {
         if (mounted) {
           setState(() {
-            _updateObjects(); // Update the position of falling particles on each frame
+            _updateObjects();
           });
         }
       })
-      ..repeat(); // Continuously repeat the animation
+      ..repeat();
 
-    // After the first frame, initialize the falling objects
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initFallObjects();
     });
@@ -126,47 +119,47 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    // Dispose of the animation controller when the widget is removed from the widget tree
     controller.dispose();
     super.dispose();
   }
 
-  /// Load an image from the assets or network and return it as a ui.Image.
+  /// Loads an image from the asset bundle.
   Future<ui.Image> _loadImage(String path) async {
     final ByteData data = await rootBundle.load(path);
     final Uint8List bytes = Uint8List.view(data.buffer);
     return await decodeImageFromList(bytes);
   }
 
-  /// Initialize the falling particles with random positions and sizes.
+  /// Initializes the falling objects (particles).
   Future<void> _initFallObjects() async {
     for (int i = 0; i < _totalObjects; i++) {
       _fallingObjects.add(await _createFallObject());
     }
   }
 
-  /// Create a single falling particle with random properties.
+  /// Creates a new falling object with random properties.
   Future<FallObject> _createFallObject() async {
-    final double density = Random().nextDouble() * _speed; // Random speed
-    final double x = Random().nextDouble() *
-        MediaQuery.of(context).size.width; // Random horizontal position
-    final double y = widget.startFromTop
-        ? -Random().nextDouble() *
-            MediaQuery.of(context).size.height // Start from top if set
-        : Random().nextDouble() *
-            MediaQuery.of(context).size.height; // Random vertical position
+    final double density = Random().nextDouble() * _speed;
+    final double x = Random().nextDouble() * MediaQuery.of(context).size.width;
+    final double y =
+        widget.startFromTop ? -Random().nextDouble() * MediaQuery.of(context).size.height : Random().nextDouble() * MediaQuery.of(context).size.height;
 
-    // Randomly select an image for the particle
-    String imageUrl =
-        widget.particleImages[Random().nextInt(widget.particleImages.length)];
-    ui.Image image = await _loadImage(imageUrl);
+    // Check if using emojis or images
+    String imageUrl;
+    ui.Image image;
+    if (widget.useEmojis == true) {
+      // Use random emoji
+      imageUrl = widget.emojiList![Random().nextInt(widget.emojiList!.length)];
+      image = await _loadEmoji(imageUrl); // Custom method to load emoji
+    } else {
+      // Use random image
+      imageUrl = widget.particleImages[Random().nextInt(widget.particleImages.length)];
+      image = await _loadImage(imageUrl);
+    }
 
-    // Randomize particle size, rotation, and wind effect
     final double size = _particleSize * (0.1 + Random().nextDouble() * 0.4);
-    final double rotation =
-        Random().nextDouble() * 2 * pi; // Random rotation angle
-    final double wind = (Random().nextDouble() * 2 - 1) *
-        _windSpeed; // Random horizontal movement
+    final double rotation = Random().nextDouble() * 2 * pi;
+    final double wind = (Random().nextDouble() * 2 - 1) * _windSpeed;
 
     return FallObject(
       x: x,
@@ -179,7 +172,26 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
     );
   }
 
-  /// Dynamically update the total number of falling particles.
+  /// Loads an emoji as an image.
+  Future<ui.Image> _loadEmoji(String emoji) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder, Rect.fromPoints(Offset(0, 0), Offset(100, 100)));
+    final textStyle = TextStyle(fontSize: 40, color: Colors.black);
+    final textSpan = TextSpan(text: emoji, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout(minWidth: 0, maxWidth: 100);
+    textPainter.paint(canvas, Offset(0, 0));
+    final picture = pictureRecorder.endRecording();
+    final img = await picture.toImage(100, 100);
+    return img;
+  }
+
+  /// Updates the total number of falling objects.
   void _updateTotalObjects(int newTotal) async {
     if (newTotal > _fallingObjects.length) {
       for (int i = 0; i < newTotal - _fallingObjects.length; i++) {
@@ -191,7 +203,7 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
     _totalObjects = newTotal;
   }
 
-  /// Dynamically update the size of the falling particles.
+  /// Updates the size of the particles.
   void _updateParticleSize(double newSize) {
     setState(() {
       _particleSize = newSize;
@@ -201,7 +213,7 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
     });
   }
 
-  /// Dynamically update the wind speed (horizontal movement) of the particles.
+  /// Updates the wind speed of the particles.
   void _updateWindSpeed(double newWindSpeed) {
     setState(() {
       _windSpeed = newWindSpeed;
@@ -211,38 +223,32 @@ class FallWidgetState extends State<FlutterFall> with TickerProviderStateMixin {
     });
   }
 
-  /// Update the properties of each falling particle (position, rotation, etc.).
+  /// Updates the position and properties of the falling particles.
   void _updateObjects() {
     for (FallObject obj in _fallingObjects) {
-      obj.y += (cos(obj.density) + obj.size).abs() *
-          _speed; // Update vertical position
-      obj.x += sin(obj.density + obj.wind) *
-          _speed; // Update horizontal position based on wind
+      obj.y += (cos(obj.density) + obj.size).abs() * _speed;
+      obj.x += sin(obj.density + obj.wind) * _speed;
 
-      obj.rotation += _rotationSpeed * 0.05; // Apply rotation to the particle
-      obj.x += sin(obj.wind) * 0.5; // Apply additional wind effect
+      obj.rotation += _rotationSpeed * 0.05;
+      obj.x += sin(obj.wind) * 0.5;
 
-      // Reset the position of particles that fall off the screen
-      if (obj.x > MediaQuery.of(context).size.width + obj.size ||
-          obj.x < -obj.size ||
-          obj.y > MediaQuery.of(context).size.height + obj.size) {
+      if (obj.x > MediaQuery.of(context).size.width + obj.size || obj.x < -obj.size || obj.y > MediaQuery.of(context).size.height + obj.size) {
         obj.x = Random().nextDouble() * MediaQuery.of(context).size.width;
-        obj.y = -obj.size; // Reset Y to top
+        obj.y = -obj.size;
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Paint the falling particles on the screen using a custom painter
     return CustomPaint(
-      willChange: widget.isRunning, // Optimize for when animation is running
-      isComplex:
-          true, // Declare the custom paint as complex to improve performance
-      size: Size.infinite, // Fill the entire available space
+      willChange: widget.isRunning,
+      isComplex: true,
+      size: Size.infinite,
       painter: FallPainter(
-          isRunning: widget.isRunning,
-          particles: _fallingObjects), // Custom painter for particles
+        isRunning: widget.isRunning,
+        particles: _fallingObjects,
+      ),
     );
   }
 }

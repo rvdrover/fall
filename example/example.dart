@@ -16,6 +16,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final FallController controller = FallController();
 
+  // A list of emojis to use as falling particles
+  final List<String> emojiList = ['❄️', '🍂', '🌸', '⭐', '🍁'];
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,15 +26,17 @@ class _MyAppState extends State<MyApp> {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // Falling particles
+            // Falling particles (emoji-based)
             FlutterFall(
-              particleImages: ['assets/snowflake.png'],
+              particleImages: [], // Not needed for emoji usage
+              emojiList: emojiList, // Passing emoji list
               totalParticles: 50,
               particleSize: 35,
               particleWindSpeed: 0.2,
               particleSpeed: 0.2,
               fallController: controller,
               isRunning: true,
+              useEmojis: true, // Enable emoji particles
             ),
             // Sliders and Controls wrapped in a ListView for smooth scrolling
             Positioned(
@@ -157,6 +162,25 @@ class _MyAppState extends State<MyApp> {
                               });
                             },
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Toggle Emoji/Images
+                    Row(
+                      children: [
+                        const Text(
+                          'Use Emojis:',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Switch(
+                          value: true, // Always using emojis here
+                          onChanged: (value) {
+                            setState(() {
+                              // You can toggle between emojis and images by updating `useEmojis` state.
+                            });
+                          },
                         ),
                       ],
                     ),

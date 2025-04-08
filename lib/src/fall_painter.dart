@@ -13,10 +13,8 @@ class FallPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (FallObject obj in particles) {
-      final Rect srcRect = Rect.fromLTWH(
-          0, 0, obj.image.width.toDouble(), obj.image.height.toDouble());
-      final Rect dstRect =
-          Rect.fromLTWH(-obj.size / 2, -obj.size / 2, obj.size, obj.size);
+      final Rect srcRect = Rect.fromLTWH(0, 0, obj.image.width.toDouble(), obj.image.height.toDouble());
+      final Rect dstRect = Rect.fromLTWH(-obj.size / 2, -obj.size / 2, obj.size, obj.size);
 
       canvas.save();
       canvas.translate(obj.x + obj.wind / 2, obj.y + obj.wind / 2);

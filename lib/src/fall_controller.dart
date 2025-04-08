@@ -1,24 +1,18 @@
-/// `FallController` is a class that manages the behavior and properties of falling particles in a Flutter application.
-/// It allows external management of particle characteristics like speed, size, rotation, and wind speed.
-/// The controller can notify listeners (callback) whenever a property is updated.
+/// Controller class to manage and update particle fall parameters.
 class FallController {
-  // The total number of falling particles to render.
   int totalParticles;
-
-  // The speed at which the particles fall. A higher value makes the particles fall faster.
   double particleFallSpeed;
-
-  // The size of each falling particle.
   double particleSize;
-
-  // The speed at which the particles rotate while falling.
   double particleRotationSpeed;
-
-  // The wind speed that affects the horizontal movement of particles.
   double particleWindSpeed;
 
-  // Private variable that holds the callback function for property updates.
-  // This callback is called when any property is changed.
+  /// Callback function that is triggered when any of the parameters are updated.
+  /// The function accepts the following optional parameters:
+  /// - totalObjects: the total number of particles.
+  /// - speed: the speed at which the particles fall.
+  /// - particleSize: the size of the particles.
+  /// - windSpeed: the speed at which the particles are affected by wind.
+  /// - rotationSpeed: the speed at which the particles rotate.
   Function({
     int? totalObjects,
     double? speed,
@@ -27,24 +21,30 @@ class FallController {
     double? rotationSpeed,
   })? _onUpdate;
 
-  /// The constructor for `FallController`. It allows you to initialize the controller with custom values or defaults.
+  /// Constructor to initialize the `FallController` with optional parameters.
   ///
-  /// [totalParticles] determines how many particles will fall.
-  /// [particleFallSpeed] controls how fast the particles fall.
-  /// [particleSize] defines the size of the particles.
-  /// [particleRotationSpeed] controls how fast the particles rotate while falling.
-  /// [particleWindSpeed] controls how the wind affects the horizontal movement of the particles.
+  /// Parameters:
+  /// - `totalParticles`: The total number of particles (default is 40).
+  /// - `particleFallSpeed`: The speed at which the particles fall (default is 0.05).
+  /// - `particleSize`: The size of each particle (default is 30.0).
+  /// - `particleRotationSpeed`: The rotation speed of the particles (default is 0.02).
+  /// - `particleWindSpeed`: The wind speed affecting the particles (default is 1.0).
   FallController({
-    this.totalParticles = 40, // Default total particles
-    this.particleFallSpeed = 0.05, // Default fall speed
-    this.particleSize = 30.0, // Default particle size
-    this.particleRotationSpeed = 0.02, // Default rotation speed
-    this.particleWindSpeed = 1.0, // Default wind speed
+    this.totalParticles = 40,
+    this.particleFallSpeed = 0.05,
+    this.particleSize = 30.0,
+    this.particleRotationSpeed = 0.02,
+    this.particleWindSpeed = 1.0,
   });
 
-  /// A private method that notifies the assigned callback function of any updates to the particle properties.
+  /// Private method to notify the update callback with the new values.
   ///
-  /// This method is called when any of the properties like `totalParticles`, `particleFallSpeed`, etc., are changed.
+  /// Parameters:
+  /// - `totalObjects`: The updated total number of particles.
+  /// - `speed`: The updated fall speed of the particles.
+  /// - `particleSize`: The updated size of the particles.
+  /// - `windSpeed`: The updated wind speed affecting the particles.
+  /// - `rotationSpeed`: The updated rotation speed of the particles.
   void _notifyUpdate({
     int? totalObjects,
     double? speed,
@@ -52,7 +52,6 @@ class FallController {
     double? windSpeed,
     double? rotationSpeed,
   }) {
-    // If an `onUpdate` callback is set, call it with the updated values.
     if (_onUpdate != null) {
       _onUpdate!(
         totalObjects: totalObjects,
@@ -64,57 +63,54 @@ class FallController {
     }
   }
 
-  /// Updates the total number of falling particles.
+  /// Method to update the total number of particles.
   ///
-  /// This method sets the [totalParticles] to the new value and triggers the callback to notify the change.
+  /// Parameters:
+  /// - `newTotal`: The new total number of particles.
   void updateTotalParticles(int newTotal) {
-    totalParticles = newTotal; // Set the new total number of particles
-    _notifyUpdate(
-        totalObjects: totalParticles); // Notify any listeners of the update
+    totalParticles = newTotal;
+    _notifyUpdate(totalObjects: totalParticles);
   }
 
-  /// Updates the speed at which particles fall.
+  /// Method to update the fall speed of the particles.
   ///
-  /// This method sets the [particleFallSpeed] to the new value and triggers the callback to notify the change.
+  /// Parameters:
+  /// - `newSpeed`: The new speed at which the particles fall.
   void updateParticleFallSpeed(double newSpeed) {
-    particleFallSpeed = newSpeed; // Set the new fall speed for particles
-    _notifyUpdate(
-        speed: particleFallSpeed); // Notify any listeners of the update
+    particleFallSpeed = newSpeed;
+    _notifyUpdate(speed: particleFallSpeed);
   }
 
-  /// Updates the size of the falling particles.
+  /// Method to update the size of the particles.
   ///
-  /// This method sets the [particleSize] to the new value and triggers the callback to notify the change.
+  /// Parameters:
+  /// - `newSize`: The new size of the particles.
   void updateParticleSize(double newSize) {
-    particleSize = newSize; // Set the new size for particles
-    _notifyUpdate(
-        particleSize: particleSize); // Notify any listeners of the update
+    particleSize = newSize;
+    _notifyUpdate(particleSize: particleSize);
   }
 
-  /// Updates the wind speed that affects the particles' horizontal movement.
+  /// Method to update the wind speed affecting the particles.
   ///
-  /// This method sets the [particleWindSpeed] to the new value and triggers the callback to notify the change.
+  /// Parameters:
+  /// - `newWindSpeed`: The new wind speed affecting the particles.
   void updateParticleWindSpeed(double newWindSpeed) {
-    particleWindSpeed = newWindSpeed; // Set the new wind speed
-    _notifyUpdate(
-        windSpeed: particleWindSpeed); // Notify any listeners of the update
+    particleWindSpeed = newWindSpeed;
+    _notifyUpdate(windSpeed: particleWindSpeed);
   }
 
-  /// Updates the rotation speed of the particles.
+  /// Method to update the rotation speed of the particles.
   ///
-  /// This method sets the [particleRotationSpeed] to the new value and triggers the callback to notify the change.
+  /// Parameters:
+  /// - `newRotationSpeed`: The new rotation speed of the particles.
   void updateParticleRotationSpeed(double newRotationSpeed) {
-    particleRotationSpeed =
-        newRotationSpeed; // Set the new rotation speed for particles
-    _notifyUpdate(
-        rotationSpeed:
-            particleRotationSpeed); // Notify any listeners of the update
+    particleRotationSpeed = newRotationSpeed;
+    _notifyUpdate(rotationSpeed: particleRotationSpeed);
   }
 
-  /// The setter for the `onUpdate` callback function. This setter allows the developer to assign a callback function
-  /// that will be called whenever one of the properties is updated.
+  /// Setter to assign the callback function for updates.
   ///
-  /// The callback function can handle changes to properties like the total number of particles, speed, size, etc.
+  /// The callback function will be invoked whenever any of the parameters are updated.
   set onUpdate(
       Function({
         int? totalObjects,
@@ -123,7 +119,6 @@ class FallController {
         double? windSpeed,
         double? rotationSpeed,
       })? callback) {
-    _onUpdate =
-        callback; // Assign the provided callback to the `_onUpdate` variable
+    _onUpdate = callback;
   }
 }
